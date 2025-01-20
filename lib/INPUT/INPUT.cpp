@@ -4,9 +4,13 @@ struct Gir_Lida {
     double vel;
 };
 
+
+
+
 /*
     Escolhe entre a leitura de dados do arquivo csv ou o sensor MPU-6050
 */
+
 #if defined(CSV_MODE)
 
 /*
@@ -15,6 +19,8 @@ struct Gir_Lida {
     A seleção entre _INPUT.cpp e INPUT.cpp é feita em projeto.h
     
 */
+
+#include <time.h>
 
 typedef Gir_Lida DATA_point; 
 
@@ -75,12 +81,42 @@ void _DATA_print(int from, int till)
 
 MPU6050 GIROSCOPIO(PF_0, PF_1);
 
-void INPUT_init() {
-    ;
+void INPUT_init() 
+{
+    GIROSCOPIO.initialize();
 }
 
-Gir_Lida Ler_Giroscopio() {
-    return (Gir_Lida){};
+// tempo transcorrido em milisegundos
+int64_t time_milli() 
+{
+    // *obg usuarios de forums
+    // https://forums.mbed.com/t/how-to-get-the-runtime-in-microseconds-in-mbed-os-6/12020/3
+
+    using namespace std::chrono;
+    // Convert time_point to one in *millisecond accuracy
+    auto now_ms = time_point_cast<milliseconds>(Kernel::Clock::now()); 
+    return now_ms.time_since_epoch().count();
+}
+
+Gir_Lida Ler_Giroscopio() 
+{
+    static double buffer[4];
+    static Gir_Lida rawread, finalread;
+
+    //recebe valores do giroscópio no buffer
+    GIROSCOPIO.readGyro (&(buffer[0]));
+    GIROSCOPIO.readAccel(&(buffer[1]));
+    rawread = (Gir_Lida){buffer[0], buffer[1]};
+
+    // TODO limpeza dos valores
+    // TODO correção de viés
+    finalread = rawread;
+
+    // espera a passagem de 5 ms
+    thread_sleep_for( 5 - (time_milli() % 5) );
+
+    // retorna valor lido
+    return finalread;
 }
 
 #endif
