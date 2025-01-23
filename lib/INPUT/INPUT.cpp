@@ -4,7 +4,37 @@ struct Gir_Lida {
     double vel;
 };
 
+// Retorna média aritmetica dos HIS_TAM (16) ultimos valores recebidos
+// Valor inicial da media é 0
+Gir_Lida Moving_Avarage(Gir_Lida raw)
+{
+    // Tamanho do buffer de historico de lidas
+    #define HIS_TAM 16
 
+    static Gir_Lida MAvarage = {}, oldest;
+    static Gir_Lida historia[HIS_TAM] = {};
+    static int presente = 0;
+    
+    // achata valor lido para calculo da media
+    raw.pos /= HIS_TAM,
+    raw.vel /= HIS_TAM;
+
+    // remove valor mais antigo lido da media
+    oldest = historia[presente];
+    MAvarage.pos -= oldest.pos, 
+    MAvarage.vel -= oldest.vel;
+
+    // contabiliza valor mais recente lido na media
+    MAvarage.pos += raw.pos,
+    MAvarage.vel += raw.vel;
+    // e sobrescreve valor mais antigo na historia com o mais recente
+    historia[presente] = raw;
+    
+    // incremento modular
+    presente++; if(presente==HIS_TAM)presente=0;
+
+    return MAvarage;
+}
 
 
 /*
@@ -53,7 +83,8 @@ Gir_Lida Ler_Giroscopio()
 {
     static int t;
     t = ( (clock()*MILS_PER_CLOCK) / QUANTUM ) % _DATA.size();
-    return _DATA[ t ];
+    t = t % _DATA.size();
+    return Moving_Avarage(_DATA[ t ]);
 }
 
 // printa valores lidos do csv no intervalo [from, till]
@@ -101,22 +132,23 @@ int64_t time_milli()
 Gir_Lida Ler_Giroscopio() 
 {
     static double buffer[4];
-    static Gir_Lida rawread, finalread;
+    static Gir_Lida rawread, read;
 
-    //recebe valores do giroscópio no buffer
+    // recebe valores do giroscópio
     GIROSCOPIO.readGyro (&(buffer[0]));
     GIROSCOPIO.readAccel(&(buffer[1]));
     rawread = (Gir_Lida){buffer[0], buffer[1]};
 
-    // TODO limpeza dos valores
+    // limpeza dos valores com moving avarage
+    read = Moving_Avarage(rawread);
+
     // TODO correção de viés
-    finalread = rawread;
 
     // espera a passagem de 5 ms
     thread_sleep_for( 5 - (time_milli() % 5) );
 
     // retorna valor lido
-    return finalread;
+    return read;
 }
 
 #endif
