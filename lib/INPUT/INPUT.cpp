@@ -1,11 +1,14 @@
+#include <iostream>
 
 struct Gir_Lida {
     double pos;
     double vel;
+    
+    void print() {
+        printf("%lf, %lf\n", pos, vel);
+    }
 };
 
-// Retorna média aritmetica dos HIS_TAM (16) ultimos valores recebidos
-// Valor inicial da media é 0
 Gir_Lida Moving_Avarage(Gir_Lida raw)
 {
     // Tamanho do buffer de historico de lidas
@@ -36,10 +39,9 @@ Gir_Lida Moving_Avarage(Gir_Lida raw)
     return MAvarage;
 }
 
+Gir_Lida VIES_C;
 
-/*
-    Escolhe entre a leitura de dados do arquivo csv ou o sensor MPU-6050
-*/
+/* Escolhe entre a leitura de dados do arquivo csv ou o sensor MPU-6050 */
 
 #if defined(CSV_MODE)
 
@@ -75,16 +77,27 @@ void INPUT_init()
         ) != EOF
     ) 
         _DATA.push_back(buffer_data);
+    
+    Calc_Vies_Constante();
 
 }
 
-// Lê valor da tabela lida do CSV em função do tempo transcorrido do programa
+// Lê valor da tabela lida do CSV
 Gir_Lida Ler_Giroscopio()
 {
     static int t;
-    t = ( (clock()*MILS_PER_CLOCK) / QUANTUM ) % _DATA.size();
-    t = t % _DATA.size();
-    return Moving_Avarage(_DATA[ t ]);
+    //t = ( (clock()*MILS_PER_CLOCK) / QUANTUM ) % _DATA.size();
+    //t = t % _DATA.size();
+    printf("% 5i: ", t);
+    return Moving_Avarage(_DATA[ t++ ]);
+}
+
+void Calc_Vies_Constante() 
+{
+    // sabemos que nesse CSV o giroscopio está parado até o frame 3500
+    // (e mais um pouco depois, mas decidi parar nesse ponto)
+    for(int i = 0; i < 3500; i++) 
+        VIES_C = Moving_Avarage(Ler_Giroscopio()), printf("\n");
 }
 
 // printa valores lidos do csv no intervalo [from, till]
@@ -93,10 +106,20 @@ void _DATA_print(int from, int till)
     static unsigned int i;
     if(till < 0)
         for(i = 0; i < _DATA.size(); i++)
-            printf("%lf, %lf\n", _DATA[i].pos, _DATA[i].vel);
+            _DATA[i].print();
     else
         for(i = from; i < _DATA.size() && i < (unsigned int)till; i++)
-            printf("%lf, %lf\n", _DATA[i].pos, _DATA[i].vel);
+            _DATA[i].print();
+}
+
+void _Teste_MA() 
+{
+    for(int i = 0; i < 16; i++)
+        Moving_Avarage((DATA_point){0.0, 0.0});
+    for(int i = 0; i < 32; i++)
+        Moving_Avarage((DATA_point){(double)i, -(double)i/10.0}).print();
+    for(int i = 0; i < 32; i++)
+        Moving_Avarage((DATA_point){(double)32, -(double)32/10.0}).print();
 }
 
 #else // GYROSCOPE MODE
@@ -112,11 +135,6 @@ void _DATA_print(int from, int till)
 
 MPU6050 GIROSCOPIO(PF_0, PF_1);
 
-void INPUT_init() 
-{
-    GIROSCOPIO.initialize();
-}
-
 // tempo transcorrido em milisegundos
 int64_t time_milli() 
 {
@@ -129,26 +147,40 @@ int64_t time_milli()
     return now_ms.time_since_epoch().count();
 }
 
-Gir_Lida Ler_Giroscopio() 
+Gir_Lida Ler_Giroscopio()
 {
     static double buffer[4];
     static Gir_Lida rawread, read;
 
     // recebe valores do giroscópio
-    GIROSCOPIO.readGyro (&(buffer[0]));
-    GIROSCOPIO.readAccel(&(buffer[1]));
-    rawread = (Gir_Lida){buffer[0], buffer[1]};
+    GIROSCOPIO.readGyro (&(buffer[1])); // buffer = {--, ax, ay, az};
+    GIROSCOPIO.readAccel(&(buffer[0])); // buffer = {wx, wy, wz, az};
+    rawread = (Gir_Lida){buffer[3], buffer[2]};
 
     // limpeza dos valores com moving avarage
     read = Moving_Avarage(rawread);
-
-    // TODO correção de viés
+    
+    // remoção de viés constante precalculado
+    read.pos -= VIES_C.pos, read.vel -= VIES_C.vel;
 
     // espera a passagem de 5 ms
     thread_sleep_for( 5 - (time_milli() % 5) );
 
     // retorna valor lido
     return read;
+}
+
+void Calc_Vies_Constante() 
+{
+    while(time_milli() < 1000)
+        VIES_C = Moving_Avarage(Ler_Giroscopio());
+}
+
+void INPUT_init() 
+{
+    GIROSCOPIO.initialize();
+
+    Calc_Vies_Constante();
 }
 
 #endif

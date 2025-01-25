@@ -1,22 +1,22 @@
 
-#define CSV_MODE // Código será compilado no modo de leitura de CSV
+//#define CSV_MODE // Código será compilado no modo de leitura de CSV
 
 #include "projeto.h"
 
 
 int main() 
 {
-    INPUT_init();
 
-    Gir_Lida temp;
-    
+    INPUT_init();
+    VIES_C.print();
+
     for(int i = 0; i < 10000; i++)
-        temp = Ler_Giroscopio(),
-        printf("%lf, %lf\n", temp.pos, temp.vel);
+        Ler_Giroscopio().print();
 
     #ifdef CSV_MODE
     printf("Lidos %i valores de posicao e velocidade angular\n", _DATA.size());
     _DATA_print(10, 20);
+    _Teste_MA();
     #endif
 }
 
