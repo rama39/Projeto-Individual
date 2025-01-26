@@ -90,7 +90,7 @@ double Ler_Giroscopio()
     while(theta > +3.14159265) theta -= 2*3.14159265;
     while(theta < -3.14159265) theta += 2*3.14159265;
     
-    printf("% 5i: { % 11.8lf | % 11.8lf }, % 11.8lf\n", t, _DATA[ t ][1], theta, read); 
+    printf("% 5i: { % 11.8lf | % 11.8lf }\n", t, theta, _DATA[ t ][1]); 
     
     t++; return read;
 }
