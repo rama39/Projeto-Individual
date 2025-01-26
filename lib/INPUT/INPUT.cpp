@@ -1,5 +1,5 @@
+// Funções, Tipos, Variáveis independentes do modo ===========================
 #include <iostream>
-
 struct Gir_Lida {
     double pos;
     double vel;
@@ -8,6 +8,9 @@ struct Gir_Lida {
         printf("%lf, %lf\n", pos, vel);
     }
 };
+
+// Gir_Lida {grau, grau/s} vira {rad, rad/s}
+#define ToRad(v) ((Gir_Lida){v.pos*0.01745329, v.vel*0.01745329})
 
 Gir_Lida Moving_Avarage(Gir_Lida raw)
 {
@@ -43,14 +46,7 @@ Gir_Lida VIES_C;
 
 /* Escolhe entre a leitura de dados do arquivo csv ou o sensor MPU-6050 */
 
-#if defined(CSV_MODE)
-
-/*
-    Essa versão da biblioteca foi feita para utilizar os dados do csv
-
-    A seleção entre _INPUT.cpp e INPUT.cpp é feita em projeto.h
-    
-*/
+#if defined(CSV_MODE) // Funções, Tipos, Variáveis do modo CSV ===============
 
 #include <time.h>
 
@@ -85,11 +81,13 @@ void INPUT_init()
 // Lê valor da tabela lida do CSV
 Gir_Lida Ler_Giroscopio()
 {
-    static int t;
-    //t = ( (clock()*MILS_PER_CLOCK) / QUANTUM ) % _DATA.size();
-    //t = t % _DATA.size();
-    printf("% 5i: ", t);
-    return Moving_Avarage(_DATA[ t++ ]);
+    static int t = 0;
+    static Gir_Lida read;
+    printf("% 5i: ", t); // menos comentários pq aqui é igual à outra
+    read = Moving_Avarage(_DATA[ t++ ]);
+    read.pos -= VIES_C.pos, read.vel -= VIES_C.vel;
+    read = ToRad(read);
+    return read;
 }
 
 void Calc_Vies_Constante() 
@@ -112,6 +110,7 @@ void _DATA_print(int from, int till)
             _DATA[i].print();
 }
 
+// roda Moving_Avarage varias vezes para debug
 void _Teste_MA() 
 {
     for(int i = 0; i < 16; i++)
@@ -122,14 +121,7 @@ void _Teste_MA()
         Moving_Avarage((DATA_point){(double)32, -(double)32/10.0}).print();
 }
 
-#else // GYROSCOPE MODE
-
-/*
-    Essa versão da biblioteca foi feita para utilizar o sensor MPU-6050
-
-    A seleção entre _INPUT.cpp e INPUT.cpp é feita em projeto.h
-    
-*/
+#else // Funções, Tipos, Variáveis do modo giroscópio ========================
 
 #include "../MPU6050/MPU6050.cpp"
 
@@ -155,13 +147,16 @@ Gir_Lida Ler_Giroscopio()
     // recebe valores do giroscópio
     GIROSCOPIO.readGyro (&(buffer[1])); // buffer = {--, ax, ay, az};
     GIROSCOPIO.readAccel(&(buffer[0])); // buffer = {wx, wy, wz, az};
-    rawread = (Gir_Lida){buffer[3], buffer[2]};
+    rawread = (Gir_Lida){buffer[3], buffer[2]}; //           2^  3^
 
     // limpeza dos valores com moving avarage
     read = Moving_Avarage(rawread);
     
     // remoção de viés constante precalculado
     read.pos -= VIES_C.pos, read.vel -= VIES_C.vel;
+
+    // converte valores de graus para radianas
+    read = ToRad(read);
 
     // espera a passagem de 5 ms
     thread_sleep_for( 5 - (time_milli() % 5) );
@@ -184,3 +179,4 @@ void INPUT_init()
 }
 
 #endif
+//============================================================================

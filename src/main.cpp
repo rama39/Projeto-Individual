@@ -1,5 +1,5 @@
 
-//#define CSV_MODE // Código será compilado no modo de leitura de CSV
+#define CSV_MODE // Código será compilado no modo de leitura de CSV
 
 #include "projeto.h"
 
