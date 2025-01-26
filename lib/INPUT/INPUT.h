@@ -1,19 +1,13 @@
 
-// Intervalo entre lidas em milisegundos
-#define QUANTUM 5
-
-// struct armazena ângulo e velocidade angular
-struct Gir_Lida;
-
 // Inicializa mecanismo de leitura (CSV ou Giroscópio)
 void INPUT_init();
 
 // Lê valores de odometria (CSV ou giroscópio)
-Gir_Lida Ler_Giroscopio();
+double Ler_Giroscopio();
 
 // Retorna média aritmetica dos HIS_TAM (16) últimos valores recebidos
 // Valor inicial da media é 0
-Gir_Lida Moving_Avarage(Gir_Lida raw);
+double Moving_Avarage(double raw);
 
 // Calcula medida do viés constante do giroscópio, supondo que está
 // parado (w=0) e na posição de angulo = 0

@@ -8,14 +8,14 @@ int main()
 {
 
     INPUT_init();
-    VIES_C.print();
+    cout<<VIES_C;
 
     for(int i = 0; i < 10000; i++)
-        Ler_Giroscopio().print();
+        Ler_Giroscopio();
 
     #ifdef CSV_MODE
     printf("Lidos %i valores de posicao e velocidade angular\n", _DATA.size());
-    _DATA_print(10, 20);
+    //_DATA_print(10, 20);
     _Teste_MA();
     #endif
 }
