@@ -83,7 +83,8 @@ Gir_Lida Ler_Giroscopio()
 {
     static int t = 0;
     static Gir_Lida read;
-    printf("% 5i: ", t); // menos comentários pq aqui é igual à outra
+    printf("% 5i: ", t); 
+    // sem comentários pq aqui é igual à outra
     read = Moving_Avarage(_DATA[ t++ ]);
     read.pos -= VIES_C.pos, read.vel -= VIES_C.vel;
     read = ToRad(read);
@@ -95,10 +96,10 @@ void Calc_Vies_Constante()
     // sabemos que nesse CSV o giroscopio está parado até o frame 3500
     // (e mais um pouco depois, mas decidi parar nesse ponto)
     for(int i = 0; i < 3500; i++) 
-        VIES_C = Moving_Avarage(Ler_Giroscopio()), printf("\n");
+        VIES_C = Ler_Giroscopio(), printf("\n");
 }
 
-// printa valores lidos do csv no intervalo [from, till]
+// printa valores lidos do csv no intervalo [from, till] para teste
 void _DATA_print(int from, int till)
 {
     static unsigned int i;
@@ -128,7 +129,7 @@ void _Teste_MA()
 MPU6050 GIROSCOPIO(PF_0, PF_1);
 
 // tempo transcorrido em milisegundos
-int64_t time_milli() 
+int64_t time_milli()
 {
     // *obg usuarios de forums
     // https://forums.mbed.com/t/how-to-get-the-runtime-in-microseconds-in-mbed-os-6/12020/3
@@ -159,19 +160,19 @@ Gir_Lida Ler_Giroscopio()
     read = ToRad(read);
 
     // espera a passagem de 5 ms
-    thread_sleep_for( 5 - (time_milli() % 5) );
+    thread_sleep_for( QUANTUM - (time_milli() % QUANTUM) );
 
     // retorna valor lido
     return read;
 }
 
-void Calc_Vies_Constante() 
+void Calc_Vies_Constante()
 {
     while(time_milli() < 1000)
-        VIES_C = Moving_Avarage(Ler_Giroscopio());
+        VIES_C = Ler_Giroscopio();
 }
 
-void INPUT_init() 
+void INPUT_init()
 {
     GIROSCOPIO.initialize();
 

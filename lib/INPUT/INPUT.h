@@ -1,12 +1,8 @@
 
-// encontrar forma correta de contar milisegundos (talvez com o clock da placa)
-
-// Milliseconds per clock of runtime
-#define MILS_PER_CLOCK (1000/CLOCKS_PER_SEC)
-
 // Intervalo entre lidas em milisegundos
 #define QUANTUM 5
 
+// struct armazena ângulo e velocidade angular
 struct Gir_Lida;
 
 // Inicializa mecanismo de leitura (CSV ou Giroscópio)
@@ -15,7 +11,7 @@ void INPUT_init();
 // Lê valores de odometria (CSV ou giroscópio)
 Gir_Lida Ler_Giroscopio();
 
-// Retorna média aritmetica dos HIS_TAM (16) ultimos valores recebidos
+// Retorna média aritmetica dos HIS_TAM (16) últimos valores recebidos
 // Valor inicial da media é 0
 Gir_Lida Moving_Avarage(Gir_Lida raw);
 
